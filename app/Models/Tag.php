@@ -1,0 +1,28 @@
+<?php
+
+namespace App\Models;
+
+use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+
+class Tag extends Model
+{
+    use HasFactory;
+
+    protected $fillable = [
+        'name',
+        'color',
+        'is_featured',
+    ];
+
+    protected $casts = [
+        'is_featured' => 'boolean',
+    ];
+
+    public function collections(): BelongsToMany
+    {
+        return $this->belongsToMany(Collection::class, 'collection_tag')
+            ->withTimestamps();
+    }
+}
