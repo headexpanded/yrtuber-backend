@@ -4,6 +4,7 @@ namespace App\Http\Resources;
 
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
+use JetBrains\PhpStorm\ArrayShape;
 
 class UserResource extends JsonResource
 {
@@ -12,7 +13,15 @@ class UserResource extends JsonResource
      *
      * @return array<string, mixed>
      */
-    public function toArray(Request $request): array
+    #[ArrayShape([
+        'id' => "mixed",
+        'username' => "mixed",
+        'email' => "mixed",
+        'email_verified_at' => "mixed",
+        'created_at' => "mixed",
+        'updated_at' => "mixed",
+        "6" => "array|array[]"
+    ])] public function toArray(Request $request): array
     {
         return [
             'id' => $this->id,

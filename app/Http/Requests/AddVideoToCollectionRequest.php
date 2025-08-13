@@ -2,7 +2,9 @@
 
 namespace App\Http\Requests;
 
+use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
+use JetBrains\PhpStorm\ArrayShape;
 
 class AddVideoToCollectionRequest extends FormRequest
 {
@@ -17,9 +19,13 @@ class AddVideoToCollectionRequest extends FormRequest
     /**
      * Get the validation rules that apply to the request.
      *
-     * @return array<string, \Illuminate\Contracts\Validation\ValidationRule|array<mixed>|string>
+     * @return array<string, ValidationRule|array|string>
      */
-    public function rules(): array
+    #[ArrayShape([
+        'video_id' => "string",
+        'position' => "string",
+        'curator_notes' => "string",
+    ])] public function rules(): array
     {
         return [
             'video_id' => 'required|integer|exists:videos,id',
@@ -33,7 +39,13 @@ class AddVideoToCollectionRequest extends FormRequest
      *
      * @return array<string, string>
      */
-    public function messages(): array
+    #[ArrayShape([
+        'video_id.required' => "string",
+        'video_id.exists' => "string",
+        'position.integer' => "string",
+        'position.min' => "string",
+        'curator_notes.max' => "string"
+    ])] public function messages(): array
     {
         return [
             'video_id.required' => 'Video ID is required.',
