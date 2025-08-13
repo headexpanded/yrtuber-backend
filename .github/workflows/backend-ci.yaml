@@ -1,0 +1,85 @@
+name: "Backend CI"
+
+on:
+  push:
+    branches: ["main"]
+  pull_request:
+    branches: ["main"]
+  workflow_dispatch: {} # optional manual trigger (useful for first run)
+
+jobs:
+  laravel-tests:
+    name: "Laravel tests"
+    runs-on: ubuntu-latest
+
+    services:
+      mysql:
+        # Use the official MySQL 8.x image. If you require a specific vendor image (8.4),
+        # replace this with the exact image:tag that exists in your registry.
+        image: "mysql:8.0"
+        env:
+          MYSQL_ROOT_PASSWORD: "root"
+          MYSQL_DATABASE: "testing"
+        ports:
+          - "3306:3306"
+        options: >-
+          --health-cmd="mysqladmin ping -h127.0.0.1 -uroot -proot"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=5
+
+    steps:
+      - name: "Checkout code"
+        uses: "actions/checkout@v4"
+        with:
+          fetch-depth: 0
+
+      - name: "Setup PHP"
+        uses: "shivammathur/setup-php@v2"
+        with:
+          php-version: "8.3"
+          extensions: "mbstring, bcmath, pdo_mysql, xml, curl"
+          ini-values: "memory_limit=2G"
+          coverage: "none"
+
+      - name: "Cache Composer"
+        uses: "actions/cache@v4"
+        with:
+          path: "~/.composer/cache"
+          key: "composer-${{ hashFiles('**/composer.lock') }}"
+          restore-keys: |
+            composer-
+
+      - name: "Install Composer dependencies"
+        working-directory: "./"
+        run: |
+          composer install --prefer-dist --no-progress --no-interaction --no-suggest
+        # if your backend root is not repo root, set working-directory to backend/
+
+      - name: "Create .env and configure DB"
+        run: |
+          cp .env.example .env
+          php artisan key:generate
+          php artisan config:clear
+          php artisan migrate:status || true
+          # Ensure DB values point to MySQL service
+          php -r '$env = file_get_contents(".env"); $env = preg_replace("/DB_CONNECTION=.*/","DB_CONNECTION=mysql",$env); $env = preg_replace("/DB_HOST=.*/","DB_HOST=127.0.0.1",$env); $env = preg_replace("/DB_PORT=.*/","DB_PORT=3306",$env); $env = preg_replace("/DB_DATABASE=.*/","DB_DATABASE=testing",$env); $env = preg_replace("/DB_USERNAME=.*/","DB_USERNAME=root",$env); $env = preg_replace("/DB_PASSWORD=.*/","DB_PASSWORD=root",$env); file_put_contents(".env",$env);'
+
+      - name: "Wait for MySQL to be ready"
+        run: |
+          for i in {1..30}; do
+            if mysqladmin ping -h127.0.0.1 -uroot -proot --silent; then
+              echo "MySQL is up"
+              break
+            fi
+            echo "Waiting for MySQL..."
+            sleep 2
+          done
+
+      - name: "Run migrations"
+        run: |
+          php artisan migrate --force
+
+      - name: "Run tests"
+        run: |
+          php artisan test --stop-on-failure
