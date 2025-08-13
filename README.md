@@ -3,7 +3,7 @@
 This is the backend for yrtuber, a project that provides a platform for YouTube content creators to manage their channels and interact with their audience.
 ## Architecture
 
-- Laravel 12.21.0 (PHP 8.2)
+- Laravel 12.21.0 (PHP 8.3)
 - MySQL 8.4
 - Docker & Docker Compose
 
