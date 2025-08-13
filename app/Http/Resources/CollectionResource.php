@@ -47,7 +47,7 @@ class CollectionResource extends JsonResource
                         'youtube_id' => $video->youtube_id,
                         'title' => $video->title,
                         'description' => $video->description,
-                        'thumbnail' => $video->thumbnail,
+                        'thumbnail_url' => $video->thumbnail_url,
                         'duration' => $video->duration,
                         'channel_name' => $video->channel_name,
                         'published_at' => $video->published_at,
@@ -67,8 +67,8 @@ class CollectionResource extends JsonResource
                     ];
                 });
             }),
-            'is_liked' => $this->when($request->user(), function () {
-                return $this->likes()->where('user_id', $this->user()->id)->exists();
+            'is_liked' => $this->when($request->user(), function () use ($request) {
+                return $this->likes()->where('user_id', $request->user()->id)->exists();
             }),
         ];
     }

@@ -125,7 +125,8 @@ class VideoController extends Controller
 
         // Get the next position if not specified
         if (!isset($data['position'])) {
-            $data['position'] = $collection->videos()->max('position') + 1;
+            $maxPosition = $collection->videos()->max('position') ?? 0;
+            $data['position'] = $maxPosition + 1;
         }
 
         $collection->videos()->attach($data['video_id'], [
@@ -202,7 +203,7 @@ class VideoController extends Controller
         }
 
         return response()->json([
-            'video' => new VideoResource($video),
+            'data' => new VideoResource($video),
         ]);
     }
 

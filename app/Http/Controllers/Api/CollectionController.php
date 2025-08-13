@@ -74,8 +74,13 @@ class CollectionController extends Controller
     /**
      * Display the specified collection.
      */
-    public function show(Collection $collection): CollectionResource
+    public function show(Request $request, Collection $collection): CollectionResource|JsonResponse
     {
+        // Check if user can view the collection
+        if (!$collection->is_public && $collection->user_id !== $request->user()?->id) {
+            return response()->json(['message' => 'Unauthorized'], 403);
+        }
+
         // Increment view count for public collections
         if ($collection->is_public) {
             $collection->increment('view_count');

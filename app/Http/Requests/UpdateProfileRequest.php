@@ -29,6 +29,12 @@ class UpdateProfileRequest extends FormRequest
                 'max:255',
                 Rule::unique('user_profiles', 'username')->ignore($this->user()->profile?->id),
             ],
+            'email' => [
+                'sometimes',
+                'email',
+                'max:255',
+                Rule::unique('users', 'email')->ignore($this->user()->id),
+            ],
             'bio' => 'sometimes|nullable|string|max:1000',
             'avatar' => 'sometimes|nullable|string|max:255',
             'website' => 'sometimes|nullable|url|max:255',

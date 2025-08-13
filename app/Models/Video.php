@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\MorphMany;
 
 class Video extends Model
 {
@@ -37,20 +38,21 @@ class Video extends Model
     {
         return $this->belongsToMany(Collection::class, 'collection_video')
             ->withPivot('position', 'curator_notes')
-            ->withTimestamps();
+            ->withTimestamps()
+            ->orderBy('pivot_position');
     }
 
-    public function likes(): HasMany
+    public function likes(): MorphMany
     {
         return $this->morphMany(Like::class, 'likeable');
     }
 
-    public function comments(): HasMany
+    public function comments(): MorphMany
     {
         return $this->morphMany(Comment::class, 'commentable');
     }
 
-    public function activityLogs(): HasMany
+    public function activityLogs(): MorphMany
     {
         return $this->morphMany(ActivityLog::class, 'loggable');
     }

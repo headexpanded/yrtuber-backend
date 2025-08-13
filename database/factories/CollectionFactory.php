@@ -65,4 +65,19 @@ class CollectionFactory extends Factory
             'is_featured' => true,
         ]);
     }
+
+    /**
+     * Indicate that the collection has default values.
+     */
+    public function withDefaults(): static
+    {
+        return $this->state(fn (array $attributes) => [
+            'layout' => 'grid',
+            'is_public' => true,
+            'is_featured' => false,
+            'view_count' => 0,
+            'like_count' => 0,
+            'video_count' => 0,
+        ]);
+    }
 }

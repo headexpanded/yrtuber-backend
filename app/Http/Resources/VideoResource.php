@@ -42,8 +42,8 @@ class VideoResource extends JsonResource
                     ];
                 });
             }),
-            'is_liked' => $this->when($request->user(), function () {
-                return $this->likes()->where('user_id', $this->user()->id)->exists();
+            'is_liked' => $this->when($request->user(), function () use ($request) {
+                return $this->likes()->where('user_id', $request->user()->id)->exists();
             }),
             'embed_url' => $this->when(true, function () {
                 return "https://www.youtube.com/embed/{$this->youtube_id}";

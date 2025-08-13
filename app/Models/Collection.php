@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\MorphMany;
 use Illuminate\Support\Str;
 
 class Collection extends Model
@@ -56,7 +57,7 @@ class Collection extends Model
         return $this->belongsToMany(Video::class, 'collection_video')
             ->withPivot('position', 'curator_notes')
             ->withTimestamps()
-            ->orderBy('pivot_position');
+            ->orderBy('collection_video.position');
     }
 
     public function tags(): BelongsToMany
@@ -65,12 +66,12 @@ class Collection extends Model
             ->withTimestamps();
     }
 
-    public function likes(): HasMany
+    public function likes(): MorphMany
     {
         return $this->morphMany(Like::class, 'likeable');
     }
 
-    public function comments(): HasMany
+    public function comments(): MorphMany
     {
         return $this->morphMany(Comment::class, 'commentable');
     }
@@ -80,7 +81,7 @@ class Collection extends Model
         return $this->hasMany(CollectionShare::class);
     }
 
-    public function activityLogs(): HasMany
+    public function activityLogs(): MorphMany
     {
         return $this->morphMany(ActivityLog::class, 'loggable');
     }

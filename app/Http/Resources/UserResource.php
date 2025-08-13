@@ -21,8 +21,8 @@ class UserResource extends JsonResource
             'email_verified_at' => $this->email_verified_at,
             'created_at' => $this->created_at,
             'updated_at' => $this->updated_at,
-            'profile' => $this->whenLoaded('profile', function () {
-                return [
+            ...($this->relationLoaded('profile') && $this->profile ? [
+                'profile' => [
                     'id' => $this->profile->id,
                     'username' => $this->profile->username,
                     'bio' => $this->profile->bio,
@@ -37,8 +37,8 @@ class UserResource extends JsonResource
                     'collection_count' => $this->profile->collection_count,
                     'created_at' => $this->profile->created_at,
                     'updated_at' => $this->profile->updated_at,
-                ];
-            }),
+                ]
+            ] : []),
         ];
     }
 }

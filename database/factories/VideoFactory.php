@@ -69,4 +69,15 @@ class VideoFactory extends Factory
             'like_count' => fake()->numberBetween(100000, 5000000),
         ]);
     }
+
+    /**
+     * Indicate that the video has default values (0 for counts).
+     */
+    public function withDefaults(): static
+    {
+        return $this->state(fn (array $attributes) => [
+            'view_count' => 0,
+            'like_count' => 0,
+        ]);
+    }
 }

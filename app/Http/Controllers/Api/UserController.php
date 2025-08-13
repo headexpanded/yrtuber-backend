@@ -61,6 +61,12 @@ class UserController extends Controller
         $user = $request->user();
         $data = $request->validated();
 
+        // Handle email update separately
+        if (isset($data['email'])) {
+            $user->update(['email' => $data['email']]);
+            unset($data['email']);
+        }
+
         // Update or create user profile
         $profile = $user->profile;
         if (!$profile) {
