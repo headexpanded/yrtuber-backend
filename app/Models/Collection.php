@@ -36,6 +36,11 @@ class Collection extends Model
         'video_count' => 'integer',
     ];
 
+    /**
+     * Bootstrap the model and its traits.
+     *
+     * @return void
+     */
     protected static function boot()
     {
         parent::boot();
@@ -47,11 +52,17 @@ class Collection extends Model
         });
     }
 
+    /**
+     * @return BelongsTo
+     */
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
     }
 
+    /**
+     * @return BelongsToMany
+     */
     public function videos(): BelongsToMany
     {
         return $this->belongsToMany(Video::class, 'collection_video')
@@ -60,27 +71,42 @@ class Collection extends Model
             ->orderBy('collection_video.position');
     }
 
+    /**
+     * @return BelongsToMany
+     */
     public function tags(): BelongsToMany
     {
         return $this->belongsToMany(Tag::class, 'collection_tag')
             ->withTimestamps();
     }
 
+    /**
+     * @return MorphMany
+     */
     public function likes(): MorphMany
     {
         return $this->morphMany(Like::class, 'likeable');
     }
 
+    /**
+     * @return MorphMany
+     */
     public function comments(): MorphMany
     {
         return $this->morphMany(Comment::class, 'commentable');
     }
 
+    /**
+     * @return HasMany
+     */
     public function shares(): HasMany
     {
         return $this->hasMany(CollectionShare::class);
     }
 
+    /**
+     * @return MorphMany
+     */
     public function activityLogs(): MorphMany
     {
         return $this->morphMany(ActivityLog::class, 'loggable');

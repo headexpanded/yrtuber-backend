@@ -25,11 +25,17 @@ class Notification extends Model
         'read_at' => 'datetime',
     ];
 
+    /**
+     * @return BelongsTo
+     */
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
     }
 
+    /**
+     * @return MorphTo
+     */
     public function notifiable(): MorphTo
     {
         return $this->morphTo();

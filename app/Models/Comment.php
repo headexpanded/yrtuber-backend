@@ -18,11 +18,17 @@ class Comment extends Model
         'content',
     ];
 
+    /**
+     * @return BelongsTo
+     */
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
     }
 
+    /**
+     * @return MorphTo
+     */
     public function commentable(): MorphTo
     {
         return $this->morphTo();

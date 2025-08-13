@@ -34,6 +34,9 @@ class Video extends Model
         'duration' => 'integer',
     ];
 
+    /**
+     * @return BelongsToMany
+     */
     public function collections(): BelongsToMany
     {
         return $this->belongsToMany(Collection::class, 'collection_video')
@@ -42,16 +45,25 @@ class Video extends Model
             ->orderBy('pivot_position');
     }
 
+    /**
+     * @return MorphMany
+     */
     public function likes(): MorphMany
     {
         return $this->morphMany(Like::class, 'likeable');
     }
 
+    /**
+     * @return MorphMany
+     */
     public function comments(): MorphMany
     {
         return $this->morphMany(Comment::class, 'commentable');
     }
 
+    /**
+     * @return MorphMany
+     */
     public function activityLogs(): MorphMany
     {
         return $this->morphMany(ActivityLog::class, 'loggable');

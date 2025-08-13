@@ -22,11 +22,17 @@ class CollectionShare extends Model
         'shared_at' => 'datetime',
     ];
 
+    /**
+     * @return BelongsTo
+     */
     public function collection(): BelongsTo
     {
         return $this->belongsTo(Collection::class);
     }
 
+    /**
+     * @return BelongsTo
+     */
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);

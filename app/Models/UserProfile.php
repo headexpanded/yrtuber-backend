@@ -34,6 +34,9 @@ class UserProfile extends Model
         'collection_count' => 'integer',
     ];
 
+    /**
+     * @return BelongsTo
+     */
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);

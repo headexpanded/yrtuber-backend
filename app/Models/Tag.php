@@ -20,6 +20,9 @@ class Tag extends Model
         'is_featured' => 'boolean',
     ];
 
+    /**
+     * @return BelongsToMany
+     */
     public function collections(): BelongsToMany
     {
         return $this->belongsToMany(Collection::class, 'collection_tag')

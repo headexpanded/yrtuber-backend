@@ -17,11 +17,17 @@ class Like extends Model
         'likeable_id',
     ];
 
+    /**
+     * @return BelongsTo
+     */
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
     }
 
+    /**
+     * @return MorphTo
+     */
     public function likeable(): MorphTo
     {
         return $this->morphTo();
