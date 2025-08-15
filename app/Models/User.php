@@ -101,9 +101,9 @@ class User extends Authenticatable implements MustVerifyEmail
     /**
      * @return MorphMany
      */
-    public function activityLogs(): MorphMany
+    public function activityLogs(): HasMany
     {
-        return $this->morphMany(ActivityLog::class, 'loggable');
+        return $this->hasMany(ActivityLog::class);
     }
 
     /**

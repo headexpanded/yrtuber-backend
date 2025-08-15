@@ -109,6 +109,6 @@ class Collection extends Model
      */
     public function activityLogs(): MorphMany
     {
-        return $this->morphMany(ActivityLog::class, 'loggable');
+        return $this->morphMany(ActivityLog::class, 'subject');
     }
 }

@@ -4,6 +4,9 @@ use App\Http\Controllers\Api\CollectionController;
 use App\Http\Controllers\Api\CommentController;
 use App\Http\Controllers\Api\FollowController;
 use App\Http\Controllers\Api\LikeController;
+use App\Http\Controllers\Api\RecommendationController;
+use App\Http\Controllers\Api\SearchController;
+use App\Http\Controllers\Api\TrendingController;
 use App\Http\Controllers\Api\UserController;
 use App\Http\Controllers\Api\VideoController;
 use Illuminate\Http\Request;
@@ -97,3 +100,26 @@ Route::middleware('auth:sanctum')->group(function () {
 // Public follow routes
 Route::get('/users/{user}/followers', [FollowController::class, 'userFollowers']);
 Route::get('/users/{user}/following', [FollowController::class, 'userFollowing']);
+
+// Search routes (public)
+Route::get('/search', [SearchController::class, 'global']);
+Route::get('/search/collections', [SearchController::class, 'collections']);
+Route::get('/search/videos', [SearchController::class, 'videos']);
+Route::get('/search/users', [SearchController::class, 'users']);
+
+// Trending routes (public)
+Route::get('/trending/collections', [TrendingController::class, 'collections']);
+Route::get('/trending/videos', [TrendingController::class, 'videos']);
+Route::get('/trending/creators', [TrendingController::class, 'creators']);
+Route::get('/trending/categories', [TrendingController::class, 'categories']);
+
+// Recommendation routes (authenticated)
+Route::middleware('auth:sanctum')->group(function () {
+    Route::get('/recommendations', [RecommendationController::class, 'personalized']);
+    Route::get('/recommendations/users', [RecommendationController::class, 'suggestedUsers']);
+    Route::get('/recommendations/history', [RecommendationController::class, 'basedOnHistory']);
+});
+
+// Public recommendation routes
+Route::get('/collections/{collection}/similar', [RecommendationController::class, 'similarCollections']);
+Route::get('/videos/{video}/similar', [RecommendationController::class, 'similarVideos']);

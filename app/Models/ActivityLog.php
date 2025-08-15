@@ -13,15 +13,16 @@ class ActivityLog extends Model
 
     protected $fillable = [
         'user_id',
-        'loggable_type',
-        'loggable_id',
+        'subject_type',
+        'subject_id',
         'action',
-        'description',
-        'metadata',
+        'properties',
+        'ip_address',
+        'user_agent',
     ];
 
     protected $casts = [
-        'metadata' => 'array',
+        'properties' => 'array',
     ];
 
     /**
@@ -35,7 +36,7 @@ class ActivityLog extends Model
     /**
      * @return MorphTo
      */
-    public function loggable(): MorphTo
+    public function subject(): MorphTo
     {
         return $this->morphTo();
     }
