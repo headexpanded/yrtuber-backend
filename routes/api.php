@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Api\CollectionController;
 use App\Http\Controllers\Api\CommentController;
+use App\Http\Controllers\Api\EnhancedVideoController;
 use App\Http\Controllers\Api\FollowController;
 use App\Http\Controllers\Api\LikeController;
 use App\Http\Controllers\Api\RecommendationController;
@@ -123,3 +124,19 @@ Route::middleware('auth:sanctum')->group(function () {
 // Public recommendation routes
 Route::get('/collections/{collection}/similar', [RecommendationController::class, 'similarCollections']);
 Route::get('/videos/{video}/similar', [RecommendationController::class, 'similarVideos']);
+
+// Enhanced video management routes (authenticated)
+Route::middleware('auth:sanctum')->group(function () {
+    Route::post('/enhanced-videos', [EnhancedVideoController::class, 'store']);
+    Route::post('/videos/{video}/refresh-metadata', [EnhancedVideoController::class, 'refreshMetadata']);
+    Route::post('/videos/batch-refresh-metadata', [EnhancedVideoController::class, 'batchRefreshMetadata']);
+    Route::get('/videos/{video}/stats', [EnhancedVideoController::class, 'getVideoStats']);
+});
+
+// Public enhanced video routes
+Route::get('/enhanced-videos/{video}', [EnhancedVideoController::class, 'show']);
+Route::get('/videos/quality/{quality}', [EnhancedVideoController::class, 'getByQuality']);
+Route::get('/videos/category/{category_id}', [EnhancedVideoController::class, 'getByCategory']);
+Route::post('/youtube/search', [EnhancedVideoController::class, 'searchYouTube']);
+Route::post('/youtube/validate', [EnhancedVideoController::class, 'validateYouTube']);
+Route::get('/youtube/channel/{channel_id}', [EnhancedVideoController::class, 'getChannelInfo']);
