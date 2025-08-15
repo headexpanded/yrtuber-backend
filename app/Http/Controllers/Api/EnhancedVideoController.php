@@ -124,12 +124,12 @@ class EnhancedVideoController extends Controller
 
         try {
             $results = $this->youtubeService->searchVideos(
-                $request->query,
-                $request->max_results ?? 10
+                $request->get('query'),
+                $request->get('max_results') ?? 10
             );
 
             return response()->json([
-                'query' => $request->query,
+                'query' => $request->get('query'),
                 'results' => $results,
                 'count' => count($results),
             ]);

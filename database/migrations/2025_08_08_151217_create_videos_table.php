@@ -16,9 +16,9 @@ return new class extends Migration
             $table->string('youtube_id')->unique(); // YouTube video ID
             $table->string('title');
             $table->text('description')->nullable();
-            $table->string('thumbnail_url');
-            $table->string('channel_name');
-            $table->string('channel_id');
+            $table->string('thumbnail_url')->nullable();
+            $table->string('channel_name')->nullable();
+            $table->string('channel_id')->nullable();
             $table->integer('duration')->nullable(); // Duration in seconds
             $table->timestamp('published_at')->nullable();
             $table->integer('view_count')->default(0);
