@@ -76,6 +76,7 @@ class CommentController extends Controller
         $user = $request->user();
         $commentableType = $request->commentable_type;
         $commentableId = $request->commentable_id;
+        $content = $request->get('content');
 
         // Check if the commentable model exists
         $commentable = $commentableType::find($commentableId);
@@ -83,12 +84,12 @@ class CommentController extends Controller
             return response()->json(['message' => 'Resource not found'], 404);
         }
 
-        // Create the comment
+        // Create a comment
         $comment = Comment::create([
             'user_id' => $user->id,
             'commentable_type' => $commentableType,
             'commentable_id' => $commentableId,
-            'content' => $request->validated('content'),
+            'content' => $content,
         ]);
 
         // Load the user and profile relationships
@@ -154,8 +155,9 @@ class CommentController extends Controller
             'content' => 'required|string|max:1000',
         ]);
 
+        $content = $request->get('content');
         $comment->update([
-            'content' => $request->validated('content'),
+            'content' => $content,
         ]);
 
         // Refresh the model and load relationships
