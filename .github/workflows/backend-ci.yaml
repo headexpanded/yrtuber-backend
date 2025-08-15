@@ -82,4 +82,6 @@ jobs:
 
       - name: "Run tests"
         run: |
+          php artisan config:clear
+          php artisan cache:clear
           php artisan test --stop-on-failure
