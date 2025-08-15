@@ -76,7 +76,7 @@ jobs:
             sleep 2
           done
 
-      - name: "Run migrations"
+      - name: "Run migrations and seeders"
         run: |
           php artisan migrate --force && php artisan db:seed --force
 

@@ -120,14 +120,18 @@ class RecommendationControllerTest extends TestCase
 
     public function test_similar_videos_returns_videos_from_same_channel()
     {
+        // Create videos with unique metadata to avoid category conflicts
         $video1 = Video::factory()->withDefaults()->create([
             'channel_id' => 'channel123',
+            'metadata' => ['category' => 'unique_category_1'],
         ]);
         $video2 = Video::factory()->withDefaults()->create([
             'channel_id' => 'channel123',
+            'metadata' => ['category' => 'unique_category_2'],
         ]);
         $video3 = Video::factory()->withDefaults()->create([
             'channel_id' => 'channel456',
+            'metadata' => ['category' => 'unique_category_3'],
         ]);
 
         $response = $this->getJson("/api/videos/{$video1->id}/similar");
@@ -139,13 +143,17 @@ class RecommendationControllerTest extends TestCase
 
     public function test_similar_videos_returns_videos_with_same_category()
     {
+        // Create videos with unique channel IDs to avoid channel conflicts
         $video1 = Video::factory()->withDefaults()->create([
+            'channel_id' => 'unique_channel_1',
             'metadata' => ['category' => 'Technology'],
         ]);
         $video2 = Video::factory()->withDefaults()->create([
+            'channel_id' => 'unique_channel_2',
             'metadata' => ['category' => 'Technology'],
         ]);
         $video3 = Video::factory()->withDefaults()->create([
+            'channel_id' => 'unique_channel_3',
             'metadata' => ['category' => 'Cooking'],
         ]);
 

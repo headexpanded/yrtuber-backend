@@ -91,11 +91,16 @@ class TrendingControllerTest extends TestCase
 
     public function test_trending_videos_supports_duration_filter()
     {
+        // Create videos with explicit view/like counts to ensure proper ordering
         $shortVideo = Video::factory()->withDefaults()->create([
             'duration' => 180, // 3 minutes
+            'view_count' => 1000,
+            'like_count' => 500,
         ]);
         $longVideo = Video::factory()->withDefaults()->create([
             'duration' => 1800, // 30 minutes
+            'view_count' => 100,
+            'like_count' => 50,
         ]);
 
         $response = $this->getJson('/api/trending/videos?duration=short');
@@ -107,11 +112,16 @@ class TrendingControllerTest extends TestCase
 
     public function test_trending_videos_supports_category_filter()
     {
+        // Create videos with explicit view/like counts to ensure proper ordering
         $video1 = Video::factory()->withDefaults()->create([
             'metadata' => ['category' => 'Technology'],
+            'view_count' => 1000,
+            'like_count' => 500,
         ]);
         $video2 = Video::factory()->withDefaults()->create([
             'metadata' => ['category' => 'Cooking'],
+            'view_count' => 100,
+            'like_count' => 50,
         ]);
 
         $response = $this->getJson('/api/trending/videos?category=Technology');
@@ -126,8 +136,17 @@ class TrendingControllerTest extends TestCase
         $user1 = User::factory()->create();
         $user2 = User::factory()->create();
 
-        Collection::factory(3)->withDefaults()->create(['user_id' => $user1->id]);
-        Collection::factory(1)->withDefaults()->create(['user_id' => $user2->id]);
+        // Create collections with explicit view/like counts to ensure proper ordering
+        Collection::factory(3)->withDefaults()->create([
+            'user_id' => $user1->id,
+            'view_count' => 100,
+            'like_count' => 50,
+        ]);
+        Collection::factory(1)->withDefaults()->create([
+            'user_id' => $user2->id,
+            'view_count' => 10,
+            'like_count' => 5,
+        ]);
 
         $response = $this->getJson('/api/trending/creators');
 
@@ -140,13 +159,18 @@ class TrendingControllerTest extends TestCase
         $user1 = User::factory()->create();
         $user2 = User::factory()->create();
 
+        // Create collections with explicit view/like counts to ensure proper ordering
         Collection::factory()->withDefaults()->create([
             'user_id' => $user1->id,
             'created_at' => now()->subMonth(),
+            'view_count' => 100,
+            'like_count' => 50,
         ]);
         Collection::factory()->withDefaults()->create([
             'user_id' => $user2->id,
             'created_at' => now(),
+            'view_count' => 100,
+            'like_count' => 50,
         ]);
 
         $response = $this->getJson('/api/trending/creators?period=week');
@@ -161,13 +185,23 @@ class TrendingControllerTest extends TestCase
         $tag1 = Tag::factory()->create(['name' => 'Technology']);
         $tag2 = Tag::factory()->create(['name' => 'Cooking']);
 
-        $collection1 = Collection::factory()->withDefaults()->create();
+        // Create collections with explicit view/like counts to ensure proper ordering
+        $collection1 = Collection::factory()->withDefaults()->create([
+            'view_count' => 100,
+            'like_count' => 50,
+        ]);
         $collection1->tags()->attach($tag1->id);
 
-        $collection2 = Collection::factory()->withDefaults()->create();
+        $collection2 = Collection::factory()->withDefaults()->create([
+            'view_count' => 100,
+            'like_count' => 50,
+        ]);
         $collection2->tags()->attach($tag1->id);
 
-        $collection3 = Collection::factory()->withDefaults()->create();
+        $collection3 = Collection::factory()->withDefaults()->create([
+            'view_count' => 10,
+            'like_count' => 5,
+        ]);
         $collection3->tags()->attach($tag2->id);
 
         $response = $this->getJson('/api/trending/categories');
@@ -181,13 +215,18 @@ class TrendingControllerTest extends TestCase
     {
         $tag = Tag::factory()->create(['name' => 'Technology']);
 
+        // Create collections with explicit view/like counts to ensure proper ordering
         $oldCollection = Collection::factory()->withDefaults()->create([
             'created_at' => now()->subMonth(),
+            'view_count' => 100,
+            'like_count' => 50,
         ]);
         $oldCollection->tags()->attach($tag->id);
 
         $newCollection = Collection::factory()->withDefaults()->create([
             'created_at' => now(),
+            'view_count' => 100,
+            'like_count' => 50,
         ]);
         $newCollection->tags()->attach($tag->id);
 
