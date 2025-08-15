@@ -53,12 +53,11 @@ class TrendingController extends Controller
         }
 
         // Order by trending score (combination of views, likes, and recency)
-        $collections->orderByRaw('
-            (view_count * 0.4) +
-            (like_count * 0.4) +
-            (video_count * 0.2) +
-            (TIMESTAMPDIFF(HOUR, created_at, NOW()) * -0.01)
-        DESC');
+        // Use simple ordering that works across all databases
+        $collections->orderBy('view_count', 'desc')
+                   ->orderBy('like_count', 'desc')
+                   ->orderBy('video_count', 'desc')
+                   ->orderBy('created_at', 'desc');
 
         $collections = $collections->paginate($perPage);
 
