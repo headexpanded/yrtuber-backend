@@ -1,6 +1,9 @@
 <?php
 
 use App\Http\Controllers\Api\CollectionController;
+use App\Http\Controllers\Api\CommentController;
+use App\Http\Controllers\Api\FollowController;
+use App\Http\Controllers\Api\LikeController;
 use App\Http\Controllers\Api\UserController;
 use App\Http\Controllers\Api\VideoController;
 use Illuminate\Http\Request;
@@ -60,3 +63,37 @@ Route::middleware('auth:sanctum')->group(function () {
 Route::get('/videos/{video}', [VideoController::class, 'show']);
 Route::get('/videos/search/youtube', [VideoController::class, 'searchByYoutubeId']);
 Route::get('/videos/channel/{channelId}', [VideoController::class, 'byChannel']);
+
+// Like management routes (authenticated)
+Route::middleware('auth:sanctum')->group(function () {
+    Route::post('/likes', [LikeController::class, 'store']);
+    Route::delete('/likes', [LikeController::class, 'destroy']);
+    Route::get('/likes/check', [LikeController::class, 'check']);
+});
+
+// Public like routes
+Route::get('/likes', [LikeController::class, 'index']);
+
+// Comment management routes (authenticated)
+Route::middleware('auth:sanctum')->group(function () {
+    Route::post('/comments', [CommentController::class, 'store']);
+    Route::put('/comments/{comment}', [CommentController::class, 'update']);
+    Route::delete('/comments/{comment}', [CommentController::class, 'destroy']);
+});
+
+// Public comment routes
+Route::get('/comments', [CommentController::class, 'index']);
+Route::get('/comments/{comment}', [CommentController::class, 'show']);
+
+// Follow management routes (authenticated)
+Route::middleware('auth:sanctum')->group(function () {
+    Route::post('/follows', [FollowController::class, 'store']);
+    Route::delete('/follows', [FollowController::class, 'destroy']);
+    Route::get('/follows/following', [FollowController::class, 'following']);
+    Route::get('/follows/followers', [FollowController::class, 'followers']);
+    Route::get('/follows/check', [FollowController::class, 'check']);
+});
+
+// Public follow routes
+Route::get('/users/{user}/followers', [FollowController::class, 'userFollowers']);
+Route::get('/users/{user}/following', [FollowController::class, 'userFollowing']);
