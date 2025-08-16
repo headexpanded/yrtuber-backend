@@ -1,12 +1,15 @@
 <?php
 
+use App\Http\Controllers\Api\ActivityFeedController;
 use App\Http\Controllers\Api\CollectionController;
 use App\Http\Controllers\Api\CommentController;
 use App\Http\Controllers\Api\EnhancedVideoController;
 use App\Http\Controllers\Api\FollowController;
 use App\Http\Controllers\Api\LikeController;
+use App\Http\Controllers\Api\NotificationController;
 use App\Http\Controllers\Api\RecommendationController;
 use App\Http\Controllers\Api\SearchController;
+use App\Http\Controllers\Api\SharingController;
 use App\Http\Controllers\Api\TrendingController;
 use App\Http\Controllers\Api\UserController;
 use App\Http\Controllers\Api\VideoController;
@@ -140,3 +143,45 @@ Route::get('/videos/category/{category_id}', [EnhancedVideoController::class, 'g
 Route::post('/youtube/search', [EnhancedVideoController::class, 'searchYouTube']);
 Route::post('/youtube/validate', [EnhancedVideoController::class, 'validateYouTube']);
 Route::get('/youtube/channel/{channel_id}', [EnhancedVideoController::class, 'getChannelInfo']);
+
+// Social Features - Notifications (authenticated)
+Route::middleware('auth:sanctum')->group(function () {
+    Route::get('/notifications', [NotificationController::class, 'index']);
+    Route::get('/notifications/unread-count', [NotificationController::class, 'unreadCount']);
+    Route::patch('/notifications/{notification}/read', [NotificationController::class, 'markAsRead']);
+    Route::patch('/notifications/mark-all-read', [NotificationController::class, 'markAllAsRead']);
+    Route::delete('/notifications/{notification}', [NotificationController::class, 'destroy']);
+    Route::get('/notifications/stats', [NotificationController::class, 'stats']);
+    Route::get('/notifications/sent', [NotificationController::class, 'sent']);
+});
+
+// Social Features - Activity Feed (authenticated)
+Route::middleware('auth:sanctum')->group(function () {
+    Route::get('/activity-feed/personalized', [ActivityFeedController::class, 'personalized']);
+    Route::get('/activity-feed/user', [ActivityFeedController::class, 'user']);
+    Route::get('/activity-feed/targeted', [ActivityFeedController::class, 'targeted']);
+    Route::get('/activity-feed/filtered', [ActivityFeedController::class, 'filtered']);
+    Route::get('/activity-feed/stats', [ActivityFeedController::class, 'stats']);
+});
+
+// Social Features - Activity Feed (public)
+Route::get('/activity-feed/global', [ActivityFeedController::class, 'global']);
+Route::get('/activity-feed/trending', [ActivityFeedController::class, 'trending']);
+Route::get('/users/{username}/activity', [ActivityFeedController::class, 'userPublic']);
+
+// Social Features - Sharing (authenticated)
+Route::middleware('auth:sanctum')->group(function () {
+    Route::post('/collections/{collection}/share', [SharingController::class, 'shareCollection']);
+    Route::post('/videos/{video}/share', [SharingController::class, 'shareVideo']);
+    Route::get('/collections/{collection}/shares', [SharingController::class, 'collectionShares']);
+    Route::get('/shares/user', [SharingController::class, 'userShares']);
+    Route::get('/collections/{collection}/shares/analytics', [SharingController::class, 'collectionAnalytics']);
+    Route::get('/shares/analytics', [SharingController::class, 'userAnalytics']);
+    Route::post('/shares/{shareId}/analytics', [SharingController::class, 'updateAnalytics'])->withoutMiddleware('auth:sanctum');
+    Route::delete('/shares/{shareId}', [SharingController::class, 'revokeShare']);
+    Route::get('/collections/{collection}/embed', [SharingController::class, 'embedCode']);
+});
+
+// Social Features - Sharing (public)
+Route::get('/shares/trending', [SharingController::class, 'trending']);
+Route::get('/shares/stats', [SharingController::class, 'stats']);
