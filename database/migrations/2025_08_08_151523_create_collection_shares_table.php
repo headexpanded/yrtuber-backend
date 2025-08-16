@@ -16,12 +16,18 @@ return new class extends Migration
             $table->foreignId('collection_id')->constrained()->onDelete('cascade');
             $table->foreignId('user_id')->nullable()->constrained()->onDelete('cascade'); // Who shared it
             $table->string('platform'); // 'twitter', 'facebook', 'email', 'link'
-            $table->string('shared_url')->nullable();
+            $table->string('url'); // The actual share URL
+            $table->enum('share_type', ['public', 'private', 'temporary'])->default('public');
+            $table->timestamp('shared_at')->nullable();
+            $table->timestamp('expires_at')->nullable();
             $table->json('metadata')->nullable(); // Store platform-specific data
+            $table->json('analytics')->nullable(); // Store analytics data
             $table->timestamps();
 
             $table->index(['collection_id', 'created_at']);
             $table->index(['platform', 'created_at']);
+            $table->index(['share_type', 'created_at']);
+            $table->index(['expires_at']);
         });
     }
 
