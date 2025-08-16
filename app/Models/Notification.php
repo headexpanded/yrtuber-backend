@@ -18,11 +18,16 @@ class Notification extends Model
         'type',
         'data',
         'read_at',
+        'actor_id',
+        'subject_type',
+        'subject_id',
     ];
 
     protected $casts = [
         'data' => 'array',
         'read_at' => 'datetime',
+        'actor_id' => 'integer',
+        'subject_id' => 'integer',
     ];
 
     /**
@@ -37,6 +42,22 @@ class Notification extends Model
      * @return MorphTo
      */
     public function notifiable(): MorphTo
+    {
+        return $this->morphTo();
+    }
+
+    /**
+     * @return BelongsTo
+     */
+    public function actor(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'actor_id');
+    }
+
+    /**
+     * @return MorphTo
+     */
+    public function subject(): MorphTo
     {
         return $this->morphTo();
     }

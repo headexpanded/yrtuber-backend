@@ -16,10 +16,15 @@ class CollectionShare extends Model
         'platform',
         'url',
         'shared_at',
+        'share_type',
+        'analytics',
+        'expires_at',
     ];
 
     protected $casts = [
         'shared_at' => 'datetime',
+        'analytics' => 'array',
+        'expires_at' => 'datetime',
     ];
 
     /**
@@ -36,5 +41,44 @@ class CollectionShare extends Model
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
+    }
+
+    /**
+     * Scope for active shares
+     */
+    public function scopeActive($query)
+    {
+        return $query->where(function ($q) {
+            $q->whereNull('expires_at')
+              ->orWhere('expires_at', '>', now());
+        });
+    }
+
+    /**
+     * Scope for expired shares
+     */
+    public function scopeExpired($query)
+    {
+        return $query->where('expires_at', '<=', now());
+    }
+
+    /**
+     * Check if share is expired
+     */
+    public function isExpired(): bool
+    {
+        return $this->expires_at && $this->expires_at->isPast();
+    }
+
+    /**
+     * Update analytics
+     */
+    public function updateAnalytics(string $action): void
+    {
+        $analytics = $this->analytics ?? [];
+        $analytics[$action] = ($analytics[$action] ?? 0) + 1;
+        $analytics['last_' . $action] = now()->toISOString();
+
+        $this->update(['analytics' => $analytics]);
     }
 }

@@ -68,4 +68,21 @@ class Video extends Model
     {
         return $this->morphMany(ActivityLog::class, 'subject');
     }
+
+    /**
+     * Get the primary collection for this video
+     */
+    public function getPrimaryCollectionAttribute()
+    {
+        return $this->collections()->orderBy('collection_video.position')->first();
+    }
+
+    /**
+     * Get the owner of this video
+     */
+    public function getOwnerAttribute()
+    {
+        $collection = $this->collections()->first();
+        return $collection ? $collection->user : null;
+    }
 }

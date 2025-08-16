@@ -19,10 +19,15 @@ class ActivityLog extends Model
         'properties',
         'ip_address',
         'user_agent',
+        'target_user_id',
+        'visibility',
+        'aggregated_count',
     ];
 
     protected $casts = [
         'properties' => 'array',
+        'target_user_id' => 'integer',
+        'aggregated_count' => 'integer',
     ];
 
     /**
@@ -39,5 +44,29 @@ class ActivityLog extends Model
     public function subject(): MorphTo
     {
         return $this->morphTo();
+    }
+
+    /**
+     * @return BelongsTo
+     */
+    public function targetUser(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'target_user_id');
+    }
+
+    /**
+     * Scope for public activities
+     */
+    public function scopePublic($query)
+    {
+        return $query->where('visibility', 'public');
+    }
+
+    /**
+     * Scope for user's own activities
+     */
+    public function scopeOwn($query, $userId)
+    {
+        return $query->where('user_id', $userId);
     }
 }
