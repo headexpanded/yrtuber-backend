@@ -6,11 +6,19 @@ use App\Http\Controllers\Controller;
 use App\Models\Collection;
 use App\Models\Like;
 use App\Models\Video;
+use App\Services\EventService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
 class LikeController extends Controller
 {
+    /**
+     * @param  EventService  $eventService
+     */
+    public function __construct(
+        private EventService $eventService
+    ) {}
+
     /**
      * Like a collection or video.
      */
@@ -50,6 +58,23 @@ class LikeController extends Controller
 
         // Update the like count on the likeable model
         $likeable->increment('like_count');
+
+        // Trigger social events
+        try {
+            if ($likeable instanceof Collection) {
+                $this->eventService->handleCollectionLiked($user, $likeable);
+            } elseif ($likeable instanceof Video) {
+                $this->eventService->handleVideoLiked($user, $likeable);
+            }
+        } catch (\Exception $e) {
+            // Log error but don't fail the request
+            \Illuminate\Support\Facades\Log::warning('Failed to trigger like event', [
+                'user_id' => $user->id,
+                'likeable_type' => $likeableType,
+                'likeable_id' => $likeableId,
+                'error' => $e->getMessage(),
+            ]);
+        }
 
         return response()->json([
             'message' => 'Liked successfully',

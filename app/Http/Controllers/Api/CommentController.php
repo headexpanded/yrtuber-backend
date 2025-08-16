@@ -6,11 +6,19 @@ use App\Http\Controllers\Controller;
 use App\Models\Collection;
 use App\Models\Comment;
 use App\Models\Video;
+use App\Services\EventService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
 class CommentController extends Controller
 {
+    /**
+     * @param  EventService  $eventService
+     */
+    public function __construct(
+        private EventService $eventService
+    ) {}
+
     /**
      * Display comments for a collection or video.
      */
@@ -94,6 +102,20 @@ class CommentController extends Controller
 
         // Load the user and profile relationships
         $comment->load('user.profile');
+
+        // Trigger social events
+        try {
+            $this->eventService->handleCommentAdded($user, $comment, $commentable);
+        } catch (\Exception $e) {
+            // Log error but don't fail the request
+            \Illuminate\Support\Facades\Log::warning('Failed to trigger comment event', [
+                'user_id' => $user->id,
+                'comment_id' => $comment->id,
+                'commentable_type' => $commentableType,
+                'commentable_id' => $commentableId,
+                'error' => $e->getMessage(),
+            ]);
+        }
 
         return response()->json([
             'message' => 'Comment created successfully',

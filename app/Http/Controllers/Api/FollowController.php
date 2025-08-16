@@ -5,11 +5,21 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Models\Follow;
 use App\Models\User;
+use App\Services\EventService;
+use Exception;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 
 class FollowController extends Controller
 {
+    /**
+     * @param  EventService  $eventService
+     */
+    public function __construct(
+        private EventService $eventService
+    ) {}
+
     /**
      * Follow a user.
      */
@@ -50,6 +60,18 @@ class FollowController extends Controller
 
         if ($follower->profile) {
             $follower->profile->increment('following_count');
+        }
+
+        // Trigger social events
+        try {
+            $this->eventService->handleUserFollowed($follower, $following);
+        } catch (Exception $e) {
+            // Log error but don't fail the request
+            Log::warning('Failed to trigger follow event', [
+                'follower_id' => $follower->id,
+                'following_id' => $followingId,
+                'error' => $e->getMessage(),
+            ]);
         }
 
         return response()->json([
