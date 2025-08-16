@@ -3,82 +3,119 @@
 namespace App\Services;
 
 use App\Models\ActivityLog;
-use App\Models\User;
 use App\Models\Collection;
+use App\Models\User;
 use App\Models\Video;
-use Illuminate\Database\Eloquent\Collection as EloquentCollection;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\DB;
+use JetBrains\PhpStorm\ArrayShape;
 
 class ActivityFeedService
 {
     /**
      * Get personalized activity feed for a user
      */
-    public function getPersonalizedFeed(User $user, int $perPage = 15): EloquentCollection
+    public function getPersonalizedFeed(User $user, int $perPage = 15): LengthAwarePaginator
     {
         // Get activities from users the current user follows
         $followingIds = $user->follows->pluck('following_id')->toArray();
 
         // Get activities from followed users and global activities
         $activities = ActivityLog::query()
-            ->where(function ($query) use ($followingIds, $user) {
-                $query->whereIn('user_id', $followingIds)
-                      ->orWhere('visibility', 'public')
-                      ->orWhere('target_user_id', $user->id);
-            })
-            ->where('user_id', '!=', $user->id) // Exclude own activities
-            ->with(['user.profile', 'subject', 'targetUser.profile'])
-            ->orderBy('created_at', 'desc')
-            ->limit($perPage)
-            ->get();
+                                 ->where(function ($query) use ($followingIds, $user) {
+                                     $query->whereIn('user_id', $followingIds)
+                                           ->orWhere('visibility', 'public')
+                                           ->orWhere('target_user_id', $user->id);
+                                 })
+                                 ->where('user_id', '!=', $user->id) // Exclude own activities
+                                 ->with(['user.profile', 'subject', 'targetUser.profile'])
+                                 ->orderBy('created_at', 'desc')
+                                 ->paginate($perPage);
 
-        return $this->aggregateActivities($activities);
+        // Aggregate activities after pagination
+        $aggregated = $this->aggregateActivities($activities->getCollection());
+
+        // Create a new paginator with aggregated results
+        return new LengthAwarePaginator(
+            $aggregated,
+            $activities->total(),
+            $activities->perPage(),
+            $activities->currentPage(),
+            ['path' => request()->url()]
+        );
     }
 
     /**
      * Get global activity feed
      */
-    public function getGlobalFeed(int $perPage = 15): EloquentCollection
+    public function getGlobalFeed(int $perPage = 15): LengthAwarePaginator
     {
         $activities = ActivityLog::query()
-            ->where('visibility', 'public')
-            ->with(['user.profile', 'subject', 'targetUser.profile'])
-            ->orderBy('created_at', 'desc')
-            ->limit($perPage)
-            ->get();
+                                 ->where('visibility', 'public')
+                                 ->with(['user.profile', 'subject', 'targetUser.profile'])
+                                 ->orderBy('created_at', 'desc')
+                                 ->paginate($perPage);
 
-        return $this->aggregateActivities($activities);
+        // Aggregate activities after pagination
+        $aggregated = $this->aggregateActivities($activities->getCollection());
+
+        // Create a new paginator with aggregated results
+        return new LengthAwarePaginator(
+            $aggregated,
+            $activities->total(),
+            $activities->perPage(),
+            $activities->currentPage(),
+            ['path' => request()->url()]
+        );
     }
 
     /**
      * Get user's own activities
      */
-    public function getUserActivities(User $user, int $perPage = 15): EloquentCollection
+    public function getUserActivities(User $user, int $perPage = 15): LengthAwarePaginator
     {
         $activities = ActivityLog::query()
-            ->where('user_id', $user->id)
-            ->with(['user.profile', 'subject', 'targetUser.profile'])
-            ->orderBy('created_at', 'desc')
-            ->limit($perPage)
-            ->get();
+                                 ->where('user_id', $user->id)
+                                 ->with(['user.profile', 'subject', 'targetUser.profile'])
+                                 ->orderBy('created_at', 'desc')
+                                 ->paginate($perPage);
 
-        return $this->aggregateActivities($activities);
+        // Aggregate activities after pagination
+        $aggregated = $this->aggregateActivities($activities->getCollection());
+
+        // Create a new paginator with aggregated results
+        return new LengthAwarePaginator(
+            $aggregated,
+            $activities->total(),
+            $activities->perPage(),
+            $activities->currentPage(),
+            ['path' => request()->url()]
+        );
     }
 
     /**
      * Get activities where user is the target
      */
-    public function getTargetedActivities(User $user, int $perPage = 15): EloquentCollection
+    public function getTargetedActivities(User $user, int $perPage = 15): LengthAwarePaginator
     {
         $activities = ActivityLog::query()
-            ->where('target_user_id', $user->id)
-            ->with(['user.profile', 'subject', 'targetUser.profile'])
-            ->orderBy('created_at', 'desc')
-            ->limit($perPage)
-            ->get();
+                                 ->where('target_user_id', $user->id)
+                                 ->with(['user.profile', 'subject', 'targetUser.profile'])
+                                 ->orderBy('created_at', 'desc')
+                                 ->paginate($perPage);
 
-        return $this->aggregateActivities($activities);
+        // Aggregate activities after pagination
+        $aggregated = $this->aggregateActivities($activities->getCollection());
+
+        // Create a new paginator with aggregated results
+        return new LengthAwarePaginator(
+            $aggregated,
+            $activities->total(),
+            $activities->perPage(),
+            $activities->currentPage(),
+            ['path' => request()->url()]
+        );
     }
 
     /**
@@ -111,7 +148,7 @@ class ActivityFeedService
     /**
      * Aggregate similar activities
      */
-    private function aggregateActivities(EloquentCollection $activities): EloquentCollection
+    private function aggregateActivities(\Illuminate\Support\Collection $activities): \Illuminate\Support\Collection
     {
         $grouped = $activities->groupBy(function ($activity) {
             return $activity->action . '_' . $activity->subject_type . '_' . $activity->subject_id;
@@ -283,24 +320,63 @@ class ActivityFeedService
         $cutoffDate = now()->subDays($daysOld);
 
         return ActivityLog::where('created_at', '<', $cutoffDate)
-            ->delete();
+                          ->delete();
     }
 
     /**
      * Get activity statistics for a user
      */
-    public function getUserActivityStats(User $user): array
+    #[ArrayShape([
+        'total_activities' => "float|int",
+        'activities_by_type' => "mixed",
+        'last_activity' => "mixed",
+    ])] public function getUserActivityStats(User $user): array
     {
         $stats = ActivityLog::where('user_id', $user->id)
-            ->select('action', DB::raw('count(*) as count'))
-            ->groupBy('action')
-            ->pluck('count', 'action')
-            ->toArray();
+                            ->select('action', DB::raw('count(*) as count'))
+                            ->groupBy('action')
+                            ->pluck('count', 'action')
+                            ->toArray();
 
         return [
             'total_activities' => array_sum($stats),
             'activities_by_type' => $stats,
             'last_activity' => $user->activityLogs()->latest()->first()?->created_at,
+        ];
+    }
+
+    /**
+     * Get activity statistics summary
+     */
+    #[ArrayShape([
+        'total_activities' => "mixed",
+        'activities_by_action' => "mixed",
+        'activities_by_visibility' => "mixed",
+        'recent_activity_count' => "mixed",
+        'most_active_period' => "mixed",
+    ])] public function getActivityStatisticsSummary(): array
+    {
+        $totalActivities = ActivityLog::count();
+        $activitiesByAction = ActivityLog::select('action', DB::raw('count(*) as count'))
+                                         ->groupBy('action')
+                                         ->pluck('count', 'action')
+                                         ->toArray();
+        $activitiesByVisibility = ActivityLog::select('visibility', DB::raw('count(*) as count'))
+                                             ->groupBy('visibility')
+                                             ->pluck('count', 'visibility')
+                                             ->toArray();
+        $recentActivityCount = ActivityLog::where('created_at', '>=', now()->subDays(7))->count();
+        $mostActivePeriod = ActivityLog::select(DB::raw('DATE(created_at) as date'), DB::raw('count(*) as count'))
+                                       ->groupBy('date')
+                                       ->orderBy('count', 'desc')
+                                       ->first();
+
+        return [
+            'total_activities' => $totalActivities,
+            'activities_by_action' => $activitiesByAction,
+            'activities_by_visibility' => $activitiesByVisibility,
+            'recent_activity_count' => $recentActivityCount,
+            'most_active_period' => $mostActivePeriod ? $mostActivePeriod->date : null,
         ];
     }
 }

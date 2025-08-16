@@ -9,6 +9,7 @@ use App\Models\Video;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\URL;
+use JetBrains\PhpStorm\ArrayShape;
 
 class SharingService
 {
@@ -98,7 +99,14 @@ class SharingService
     /**
      * Get share analytics for a collection
      */
-    public function getCollectionShareAnalytics(Collection $collection): array
+    #[ArrayShape([
+        'total_clicks' => "int|mixed",
+        'total_views' => "int|mixed",
+        'total_shares' => "int",
+        'shares_by_platform' => "array",
+        'shares_by_type' => "mixed[]",
+        'engagement_rate' => "float|int"
+    ])] public function getCollectionShareAnalytics(Collection $collection): array
     {
         $shares = $collection->shares()
             ->whereNotNull('analytics')
@@ -158,8 +166,8 @@ class SharingService
             'total_clicks' => $totalClicks,
             'total_views' => $totalViews,
             'total_shares' => $shares->count(),
-            'platform_stats' => $platformStats,
-            'recent_activity' => array_slice($recentActivity, 0, 10), // Last 10 activities
+            'shares_by_platform' => $platformStats,
+            'shares_by_type' => $shares->groupBy('share_type')->map(function($group) { return $group->count(); })->toArray(),
             'engagement_rate' => $totalViews > 0 ? ($totalClicks / $totalViews) * 100 : 0,
         ];
     }
@@ -167,7 +175,16 @@ class SharingService
     /**
      * Get share analytics for a user
      */
-    public function getUserShareAnalytics(User $user): array
+    #[ArrayShape([
+        'total_clicks' => "int|mixed",
+        'total_views' => "int|mixed",
+        'total_shares' => "int",
+        'collections_shared' => "int",
+        'shares_by_platform' => "array",
+        'shares_by_type' => "mixed[]",
+        'engagement_rate' => "float|int",
+        'average_clicks_per_share' => "float|int"
+    ])] public function getUserShareAnalytics(User $user): array
     {
         $shares = $user->collectionShares()
             ->whereNotNull('analytics')
@@ -205,7 +222,8 @@ class SharingService
             'total_views' => $totalViews,
             'total_shares' => $totalShares,
             'collections_shared' => $collectionsShared,
-            'platform_stats' => $platformStats,
+            'shares_by_platform' => $platformStats,
+            'shares_by_type' => $shares->groupBy('share_type')->map(function($group) { return $group->count(); })->toArray(),
             'engagement_rate' => $totalViews > 0 ? ($totalClicks / $totalViews) * 100 : 0,
             'average_clicks_per_share' => $totalShares > 0 ? $totalClicks / $totalShares : 0,
         ];
@@ -226,7 +244,7 @@ class SharingService
     {
         return $collection->shares()
             ->active()
-            ->with('user.profile')
+            ->with(['user.profile', 'collection.user.profile'])
             ->orderBy('created_at', 'desc')
             ->get();
     }
@@ -236,7 +254,7 @@ class SharingService
      */
     public function revokeShare(CollectionShare $share): bool
     {
-        return $share->update(['expires_at' => now()]);
+        return $share->delete();
     }
 
     /**
@@ -258,9 +276,9 @@ class SharingService
     /**
      * Get trending shares
      */
-    public function getTrendingShares(int $limit = 10): \Illuminate\Database\Eloquent\Collection
+    public function getTrendingShares(int $limit = 10): \Illuminate\Pagination\LengthAwarePaginator
     {
-        return CollectionShare::query()
+        $shares = CollectionShare::query()
             ->whereNotNull('analytics')
             ->with(['collection.user.profile', 'user.profile'])
             ->get()
@@ -270,8 +288,21 @@ class SharingService
                 return $share;
             })
             ->sortByDesc('engagement_score')
-            ->take($limit)
             ->values();
+
+        // Create a custom paginator
+        $page = request()->get('page', 1);
+        $perPage = $limit;
+        $offset = ($page - 1) * $perPage;
+        $items = $shares->slice($offset, $perPage);
+
+        return new \Illuminate\Pagination\LengthAwarePaginator(
+            $items,
+            $shares->count(),
+            $perPage,
+            $page,
+            ['path' => request()->url()]
+        );
     }
 
     /**
@@ -285,7 +316,16 @@ class SharingService
     /**
      * Get share statistics summary
      */
-    public function getShareStatisticsSummary(): array
+    #[ArrayShape([
+        'total_shares' => "mixed",
+        'active_shares' => "mixed",
+        'expired_shares' => "mixed",
+        'shares_by_platform' => "mixed",
+        'shares_by_type' => "mixed",
+        'total_clicks' => "mixed",
+        'total_views' => "mixed",
+        'engagement_rate' => "float"
+    ])] public function getShareStatisticsSummary(): array
     {
         $totalShares = CollectionShare::count();
         $activeShares = CollectionShare::active()->count();
@@ -300,8 +340,47 @@ class SharingService
             'total_shares' => $totalShares,
             'active_shares' => $activeShares,
             'expired_shares' => $expiredShares,
-            'platform_distribution' => $platformDistribution,
-            'expiration_rate' => $totalShares > 0 ? ($expiredShares / $totalShares) * 100 : 0,
+            'shares_by_platform' => $platformDistribution,
+            'shares_by_type' => CollectionShare::select('share_type', DB::raw('count(*) as count'))
+                ->groupBy('share_type')
+                ->pluck('count', 'share_type')
+                ->toArray(),
+            'total_clicks' => CollectionShare::whereNotNull('analytics')
+                ->get()
+                ->sum(function ($share) {
+                    return ($share->analytics['clicks'] ?? 0);
+                }),
+            'total_views' => CollectionShare::select('analytics')
+                ->whereNotNull('analytics')
+                ->get()
+                ->sum(function ($share) {
+                    return ($share->analytics['views'] ?? 0);
+                }),
+            'engagement_rate' => $this->calculateOverallEngagementRate(),
         ];
+    }
+
+    /**
+     * Calculate overall engagement rate
+     */
+    private function calculateOverallEngagementRate(): float
+    {
+        $totalViews = CollectionShare::whereNotNull('analytics')
+            ->get()
+            ->sum(function ($share) {
+                return ($share->analytics['views'] ?? 0);
+            });
+
+        $totalClicks = CollectionShare::whereNotNull('analytics')
+            ->get()
+            ->sum(function ($share) {
+                return ($share->analytics['clicks'] ?? 0);
+            });
+
+        if ($totalViews === 0) {
+            return 0.0;
+        }
+
+        return round(($totalClicks / $totalViews) * 100, 2);
     }
 }
