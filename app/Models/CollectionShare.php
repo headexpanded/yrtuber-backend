@@ -81,4 +81,28 @@ class CollectionShare extends Model
 
         $this->update(['analytics' => $analytics]);
     }
+
+    /**
+     * Get formatted platform name
+     */
+    public function getFormattedPlatformAttribute(): string
+    {
+        $platforms = [
+            'twitter' => 'Twitter',
+            'facebook' => 'Facebook',
+            'linkedin' => 'LinkedIn',
+            'email' => 'Email',
+            'link' => 'Direct Link',
+        ];
+
+        return $platforms[$this->platform] ?? ucwords(str_replace('_', ' ', $this->platform));
+    }
+
+    /**
+     * Check if share is active
+     */
+    public function getIsActiveAttribute(): bool
+    {
+        return !$this->isExpired();
+    }
 }

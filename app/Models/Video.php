@@ -42,7 +42,7 @@ class Video extends Model
         return $this->belongsToMany(Collection::class, 'collection_video')
             ->withPivot('position', 'curator_notes')
             ->withTimestamps()
-            ->orderBy('pivot_position');
+            ->orderBy('collection_video.position');
     }
 
     /**

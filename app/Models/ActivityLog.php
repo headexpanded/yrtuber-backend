@@ -69,4 +69,30 @@ class ActivityLog extends Model
     {
         return $query->where('user_id', $userId);
     }
+
+    /**
+     * Get formatted action for display
+     */
+    public function getFormattedActionAttribute(): string
+    {
+        $actions = [
+            'collection.created' => 'Created Collection',
+            'collection.liked' => 'Liked Collection',
+            'collection.shared' => 'Shared Collection',
+            'video.added' => 'Added Video',
+            'video.liked' => 'Liked Video',
+            'comment.added' => 'Added Comment',
+            'user.followed' => 'Followed User',
+        ];
+
+        return $actions[$this->action] ?? ucwords(str_replace('.', ' ', $this->action));
+    }
+
+    /**
+     * Check if activity is aggregated
+     */
+    public function getIsAggregatedAttribute(): bool
+    {
+        return ($this->aggregated_count ?? 1) > 1;
+    }
 }

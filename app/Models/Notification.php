@@ -61,4 +61,28 @@ class Notification extends Model
     {
         return $this->morphTo();
     }
+
+    /**
+     * Get formatted type for display
+     */
+    public function getFormattedTypeAttribute(): string
+    {
+        $types = [
+            'collection_liked' => 'Collection Liked',
+            'video_liked' => 'Video Liked',
+            'comment_added' => 'Comment Added',
+            'user_followed' => 'User Followed',
+            'collection_shared' => 'Collection Shared',
+        ];
+
+        return $types[$this->type] ?? ucwords(str_replace('_', ' ', $this->type));
+    }
+
+    /**
+     * Check if notification is read
+     */
+    public function getIsReadAttribute(): bool
+    {
+        return !is_null($this->read_at);
+    }
 }
