@@ -67,6 +67,11 @@ class UserController extends Controller
             unset($data['email']);
         }
 
+        // Handle username update in both users and profile tables
+        if (isset($data['username'])) {
+            $user->update(['username' => $data['username']]);
+        }
+
         // Update or create user profile
         $profile = $user->profile;
         if (!$profile) {
@@ -78,9 +83,13 @@ class UserController extends Controller
 
         $profile->update($data);
 
+        // Reload the user to get the updated data
+        $user->refresh();
+        $user->load('profile');
+
         return response()->json([
             'message' => 'Profile updated successfully',
-            'user' => new UserResource($user->load('profile')),
+            'user' => new UserResource($user),
         ]);
     }
 
