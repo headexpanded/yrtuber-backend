@@ -282,4 +282,53 @@ class UserControllerTest extends TestCase
         $response->assertStatus(200);
         $this->assertCount(1, $response->json('data'));
     }
+
+    public function test_authenticated_user_can_get_current_user_with_profile()
+    {
+        $user = User::factory()->create();
+        $profile = UserProfile::factory()->create([
+            'user_id' => $user->id,
+            'bio' => 'Test bio',
+            'website' => 'https://example.com',
+            'social_links' => [
+                'twitter' => 'https://twitter.com/testuser',
+                'youtube' => 'https://youtube.com/testuser',
+            ],
+        ]);
+
+        Sanctum::actingAs($user);
+
+        $response = $this->getJson('/api/user');
+
+        $response->assertStatus(200)
+            ->assertJsonStructure([
+                'data' => [
+                    'id',
+                    'username',
+                    'email',
+                    'profile' => [
+                        'id',
+                        'username',
+                        'bio',
+                        'website',
+                        'social_links',
+                    ],
+                ],
+            ])
+            ->assertJson([
+                'data' => [
+                    'id' => $user->id,
+                    'username' => $user->username,
+                    'profile' => [
+                        'id' => $profile->id,
+                        'bio' => 'Test bio',
+                        'website' => 'https://example.com',
+                        'social_links' => [
+                            'twitter' => 'https://twitter.com/testuser',
+                            'youtube' => 'https://youtube.com/testuser',
+                        ],
+                    ],
+                ],
+            ]);
+    }
 }
