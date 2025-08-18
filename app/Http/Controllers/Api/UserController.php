@@ -3,12 +3,14 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\DeleteAccountRequest;
 use App\Http\Requests\UpdateProfileRequest;
 use App\Http\Resources\UserCollection;
 use App\Http\Resources\UserResource;
 use App\Models\User;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Laravel\Sanctum\Sanctum;
 
 class UserController extends Controller
 {
@@ -100,5 +102,27 @@ class UserController extends Controller
     {
         $user->load('profile');
         return new UserResource($user);
+    }
+
+    /**
+     * Delete the authenticated user's account.
+     */
+    public function destroy(DeleteAccountRequest $request): JsonResponse
+    {
+        $user = $request->user();
+
+        if (!$user) {
+            return response()->json(['message' => 'Unauthenticated'], 401);
+        }
+
+        // Revoke all tokens for the user
+        $user->tokens()->delete();
+
+        // Delete the user (this will cascade to related data due to foreign key constraints)
+        $user->delete();
+
+        return response()->json([
+            'message' => 'Account deleted successfully'
+        ]);
     }
 }
