@@ -331,4 +331,128 @@ class UserControllerTest extends TestCase
                 ],
             ]);
     }
+
+    public function test_authenticated_user_can_delete_their_account_with_correct_password()
+    {
+        $user = User::factory()->create([
+            'password' => bcrypt('password123'),
+        ]);
+        $profile = UserProfile::factory()->create(['user_id' => $user->id]);
+
+        Sanctum::actingAs($user);
+
+        $response = $this->deleteJson('/api/user', [
+            'password' => 'password123',
+        ]);
+
+        $response->assertStatus(200)
+            ->assertJson([
+                'message' => 'Account deleted successfully',
+            ]);
+
+        // Verify user is deleted
+        $this->assertDatabaseMissing('users', ['id' => $user->id]);
+        $this->assertDatabaseMissing('user_profiles', ['user_id' => $user->id]);
+    }
+
+    public function test_user_cannot_delete_account_with_incorrect_password()
+    {
+        $user = User::factory()->create([
+            'password' => bcrypt('password123'),
+        ]);
+        $profile = UserProfile::factory()->create(['user_id' => $user->id]);
+
+        Sanctum::actingAs($user);
+
+        $response = $this->deleteJson('/api/user', [
+            'password' => 'wrongpassword',
+        ]);
+
+        $response->assertStatus(422)
+            ->assertJsonValidationErrors(['password']);
+
+        // Verify user is not deleted
+        $this->assertDatabaseHas('users', ['id' => $user->id]);
+        $this->assertDatabaseHas('user_profiles', ['user_id' => $user->id]);
+    }
+
+    public function test_user_cannot_delete_account_without_password()
+    {
+        $user = User::factory()->create();
+        $profile = UserProfile::factory()->create(['user_id' => $user->id]);
+
+        Sanctum::actingAs($user);
+
+        $response = $this->deleteJson('/api/user', []);
+
+        $response->assertStatus(422)
+            ->assertJsonValidationErrors(['password']);
+
+        // Verify user is not deleted
+        $this->assertDatabaseHas('users', ['id' => $user->id]);
+        $this->assertDatabaseHas('user_profiles', ['user_id' => $user->id]);
+    }
+
+    public function test_unauthenticated_user_cannot_delete_account()
+    {
+        $response = $this->deleteJson('/api/user', [
+            'password' => 'password123',
+        ]);
+
+        $response->assertStatus(401);
+
+        // Verify no users were deleted
+        $this->assertDatabaseCount('users', 0);
+    }
+
+    public function test_account_deletion_invalidates_user_tokens()
+    {
+        $user = User::factory()->create([
+            'password' => bcrypt('password123'),
+        ]);
+        $profile = UserProfile::factory()->create(['user_id' => $user->id]);
+
+        Sanctum::actingAs($user);
+
+        // Create a token
+        $token = $user->createToken('test-token');
+
+        $response = $this->deleteJson('/api/user', [
+            'password' => 'password123',
+        ]);
+
+        $response->assertStatus(200);
+
+        // Verify token is invalidated
+        $this->assertDatabaseMissing('personal_access_tokens', [
+            'id' => $token->accessToken->id,
+        ]);
+    }
+
+    public function test_account_deletion_handles_related_data_cleanup()
+    {
+        $user = User::factory()->create([
+            'password' => bcrypt('password123'),
+        ]);
+        $profile = UserProfile::factory()->create(['user_id' => $user->id]);
+
+        // Create related data (collections, videos, etc.)
+        $collection = \App\Models\Collection::factory()->create(['user_id' => $user->id]);
+        $video = \App\Models\Video::factory()->create();
+
+        Sanctum::actingAs($user);
+
+        $response = $this->deleteJson('/api/user', [
+            'password' => 'password123',
+        ]);
+
+        $response->assertStatus(200);
+
+        // Verify user and related data are deleted
+        $this->assertDatabaseMissing('users', ['id' => $user->id]);
+        $this->assertDatabaseMissing('user_profiles', ['user_id' => $user->id]);
+        $this->assertDatabaseMissing('collections', ['user_id' => $user->id]);
+        // Videos are not directly owned by users, so they should remain
+        $this->assertDatabaseHas('videos', ['id' => $video->id]);
+    }
 }
