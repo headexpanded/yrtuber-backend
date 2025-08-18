@@ -2,8 +2,10 @@
 
 namespace App\Http\Requests;
 
+use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
+use JetBrains\PhpStorm\ArrayShape;
 
 class UpdateProfileRequest extends FormRequest
 {
@@ -18,7 +20,7 @@ class UpdateProfileRequest extends FormRequest
     /**
      * Get the validation rules that apply to the request.
      *
-     * @return array<string, \Illuminate\Contracts\Validation\ValidationRule|array<mixed>|string>
+     * @return array<string, ValidationRule|array|string>
      */
     public function rules(): array
     {
@@ -52,7 +54,14 @@ class UpdateProfileRequest extends FormRequest
      *
      * @return array<string, string>
      */
-    public function messages(): array
+    #[ArrayShape([
+        'username.unique' => "string",
+        'website.url' => "string",
+        'social_links.twitter.url' => "string",
+        'social_links.youtube.url' => "string",
+        'social_links.instagram.url' => "string",
+        'social_links.tiktok.url' => "string"
+    ])] public function messages(): array
     {
         return [
             'username.unique' => 'This username is already taken.',

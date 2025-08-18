@@ -3,8 +3,10 @@
 namespace App\Http\Requests;
 
 use App\Services\VideoEnhancementService;
+use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
+use JetBrains\PhpStorm\ArrayShape;
 
 class StoreEnhancedVideoRequest extends FormRequest
 {
@@ -19,7 +21,7 @@ class StoreEnhancedVideoRequest extends FormRequest
     /**
      * Get the validation rules that apply to the request.
      *
-     * @return array<string, \Illuminate\Contracts\Validation\ValidationRule|array<mixed>|string>
+     * @return array<string, ValidationRule|array|string>
      */
     public function rules(): array
     {
@@ -66,7 +68,12 @@ class StoreEnhancedVideoRequest extends FormRequest
     /**
      * Get custom messages for validator errors.
      */
-    public function messages(): array
+    #[ArrayShape([
+        'youtube_id.required_without' => "string",
+        'youtube_url.required_without' => "string",
+        'youtube_id.unique' => "string",
+        'youtube_url.url' => "string"
+    ])] public function messages(): array
     {
         return [
             'youtube_id.required_without' => 'Either YouTube ID or YouTube URL is required.',

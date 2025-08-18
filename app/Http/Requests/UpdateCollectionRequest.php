@@ -2,8 +2,10 @@
 
 namespace App\Http\Requests;
 
+use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
+use JetBrains\PhpStorm\ArrayShape;
 
 class UpdateCollectionRequest extends FormRequest
 {
@@ -18,9 +20,19 @@ class UpdateCollectionRequest extends FormRequest
     /**
      * Get the validation rules that apply to the request.
      *
-     * @return array<string, \Illuminate\Contracts\Validation\ValidationRule|array<mixed>|string>
+     * @return array<string, ValidationRule|array|string>
      */
-    public function rules(): array
+    #[ArrayShape([
+        'title' => "string",
+        'slug' => "array",
+        'description' => "string",
+        'cover_image' => "string",
+        'layout' => "array",
+        'is_public' => "string",
+        'is_featured' => "string",
+        'tags' => "string",
+        'tags.*' => "string"
+    ])] public function rules(): array
     {
         $collectionId = $this->route('collection')->id ?? null;
 
@@ -48,7 +60,14 @@ class UpdateCollectionRequest extends FormRequest
      *
      * @return array<string, string>
      */
-    public function messages(): array
+    #[ArrayShape([
+        'title.required' => "string",
+        'title.max' => "string",
+        'slug.unique' => "string",
+        'description.max' => "string",
+        'layout.in' => "string",
+        'tags.*.exists' => "string"
+    ])] public function messages(): array
     {
         return [
             'title.required' => 'A collection title is required.',
