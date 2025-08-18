@@ -369,7 +369,14 @@ class UserControllerTest extends TestCase
         ]);
 
         $response->assertStatus(422)
-            ->assertJsonValidationErrors(['password']);
+            ->assertJsonValidationErrors(['password'])
+            ->assertJson([
+                'errors' => [
+                    'password' => [
+                        'The provided password is incorrect.'
+                    ]
+                ]
+            ]);
 
         // Verify user is not deleted
         $this->assertDatabaseHas('users', ['id' => $user->id]);
