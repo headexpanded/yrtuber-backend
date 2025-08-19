@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Api\ActivityFeedController;
+use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\CollectionController;
 use App\Http\Controllers\Api\CommentController;
 use App\Http\Controllers\Api\EnhancedVideoController;
@@ -27,6 +28,12 @@ use Illuminate\Support\Facades\Route;
 */
 
 Route::middleware('auth:sanctum')->get('/user', [UserController::class, 'profile']);
+
+// Session management routes (authenticated)
+Route::middleware('auth:sanctum')->group(function () {
+    Route::post('/auth/refresh-session', [AuthController::class, 'refreshSession']);
+    Route::get('/auth/check', [AuthController::class, 'checkAuth']);
+});
 
 // User management routes
 Route::middleware('auth:sanctum')->group(function () {
