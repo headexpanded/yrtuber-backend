@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Models\CollectionFollow;
 use App\Models\Follow;
 use App\Models\User;
 use App\Services\EventService;
@@ -282,6 +283,151 @@ class FollowController extends Controller
 
         $isFollowing = Follow::where('follower_id', $follower->id)
             ->where('following_id', $followingId)
+            ->exists();
+
+        return response()->json([
+            'is_following' => $isFollowing,
+        ]);
+    }
+
+    /**
+     * Follow a collection.
+     */
+    public function followCollection(Request $request): JsonResponse
+    {
+        $request->validate([
+            'collection_id' => 'required|integer|exists:collections,id',
+        ]);
+
+        $follower = $request->user();
+        $collectionId = $request->collection_id;
+
+        // Check if already following
+        $existingFollow = CollectionFollow::where('follower_id', $follower->id)
+            ->where('collection_id', $collectionId)
+            ->first();
+
+        if ($existingFollow) {
+            return response()->json(['message' => 'Already following this collection'], 422);
+        }
+
+        // Create the follow relationship
+        $follow = CollectionFollow::create([
+            'follower_id' => $follower->id,
+            'collection_id' => $collectionId,
+        ]);
+
+        return response()->json([
+            'message' => 'Collection followed successfully',
+            'follow' => [
+                'id' => $follow->id,
+                'follower_id' => $follow->follower_id,
+                'collection_id' => $follow->collection_id,
+                'created_at' => $follow->created_at,
+            ],
+        ], 201);
+    }
+
+    /**
+     * Unfollow a collection.
+     */
+    public function unfollowCollection(Request $request): JsonResponse
+    {
+        $request->validate([
+            'collection_id' => 'required|integer|exists:collections,id',
+        ]);
+
+        $follower = $request->user();
+        $collectionId = $request->collection_id;
+
+        // Find the follow relationship
+        $follow = CollectionFollow::where('follower_id', $follower->id)
+            ->where('collection_id', $collectionId)
+            ->first();
+
+        if (!$follow) {
+            return response()->json(['message' => 'Follow relationship not found'], 404);
+        }
+
+        // Delete the follow relationship
+        $follow->delete();
+
+        return response()->json([
+            'message' => 'Collection unfollowed successfully',
+        ]);
+    }
+
+    /**
+     * Get collections that the current user is following.
+     */
+    public function followedCollections(Request $request): JsonResponse
+    {
+        $user = $request->user();
+
+        $followedCollections = CollectionFollow::where('follower_id', $user->id)
+            ->with(['collection.user.profile', 'collection.videos'])
+            ->orderBy('created_at', 'desc')
+            ->paginate($request->per_page ?? 15);
+
+        return response()->json([
+            'data' => $followedCollections->map(function ($follow) {
+                $collection = $follow->collection;
+                return [
+                    'id' => $collection->id,
+                    'title' => $collection->title,
+                    'slug' => $collection->slug,
+                    'description' => $collection->description,
+                    'cover_image' => $collection->cover_image,
+                    'layout' => $collection->layout,
+                    'is_public' => $collection->is_public,
+                    'is_featured' => $collection->is_featured,
+                    'view_count' => $collection->view_count,
+                    'like_count' => $collection->like_count,
+                    'video_count' => $collection->video_count,
+                    'user' => $collection->user ? [
+                        'id' => $collection->user->id,
+                        'username' => $collection->user->username,
+                        'profile' => $collection->user->profile ? [
+                            'username' => $collection->user->profile->username,
+                            'avatar' => $collection->user->profile->avatar,
+                            'bio' => $collection->user->profile->bio,
+                            'is_verified' => $collection->user->profile->is_verified,
+                        ] : null,
+                    ] : null,
+                    'videos' => $collection->videos->take(3)->map(function ($video) {
+                        return [
+                            'id' => $video->id,
+                            'title' => $video->title,
+                            'thumbnail' => $video->thumbnail,
+                            'duration' => $video->duration,
+                        ];
+                    }),
+                    'followed_at' => $follow->created_at,
+                ];
+            }),
+            'meta' => [
+                'total' => $followedCollections->total(),
+                'per_page' => $followedCollections->perPage(),
+                'current_page' => $followedCollections->currentPage(),
+                'last_page' => $followedCollections->lastPage(),
+            ],
+        ]);
+    }
+
+    /**
+     * Check if the current user is following a collection.
+     */
+    public function checkCollectionFollow(Request $request): JsonResponse
+    {
+        $request->validate([
+            'collection_id' => 'required|integer|exists:collections,id',
+        ]);
+
+        $follower = $request->user();
+        $collectionId = $request->query('collection_id');
+
+        $isFollowing = CollectionFollow::where('follower_id', $follower->id)
+            ->where('collection_id', $collectionId)
             ->exists();
 
         return response()->json([
