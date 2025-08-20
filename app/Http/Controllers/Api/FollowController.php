@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Http\Resources\CollectionResource;
 use App\Models\CollectionFollow;
 use App\Models\Follow;
 use App\Models\User;
@@ -365,45 +366,20 @@ class FollowController extends Controller
         $user = $request->user();
 
         $followedCollections = CollectionFollow::where('follower_id', $user->id)
-            ->with(['collection.user.profile', 'collection.videos'])
+            ->with(['collection.user.profile', 'collection.videos', 'collection.tags'])
             ->orderBy('created_at', 'desc')
             ->paginate($request->per_page ?? 15);
 
         return response()->json([
-            'data' => $followedCollections->map(function ($follow) {
+            'data' => $followedCollections->map(function ($follow) use ($request) {
                 $collection = $follow->collection;
-                return [
-                    'id' => $collection->id,
-                    'title' => $collection->title,
-                    'slug' => $collection->slug,
-                    'description' => $collection->description,
-                    'cover_image' => $collection->cover_image,
-                    'layout' => $collection->layout,
-                    'is_public' => $collection->is_public,
-                    'is_featured' => $collection->is_featured,
-                    'view_count' => $collection->view_count,
-                    'like_count' => $collection->like_count,
-                    'video_count' => $collection->video_count,
-                    'user' => $collection->user ? [
-                        'id' => $collection->user->id,
-                        'username' => $collection->user->username,
-                        'profile' => $collection->user->profile ? [
-                            'username' => $collection->user->profile->username,
-                            'avatar' => $collection->user->profile->avatar,
-                            'bio' => $collection->user->profile->bio,
-                            'is_verified' => $collection->user->profile->is_verified,
-                        ] : null,
-                    ] : null,
-                    'videos' => $collection->videos->take(3)->map(function ($video) {
-                        return [
-                            'id' => $video->id,
-                            'title' => $video->title,
-                            'thumbnail' => $video->thumbnail,
-                            'duration' => $video->duration,
-                        ];
-                    }),
-                    'followed_at' => $follow->created_at,
-                ];
+                $resource = new CollectionResource($collection);
+                $data = $resource->toArray($request);
+
+                // Add the followed_at timestamp to maintain the follow relationship info
+                $data['followed_at'] = $follow->created_at;
+
+                return $data;
             }),
             'meta' => [
                 'total' => $followedCollections->total(),
