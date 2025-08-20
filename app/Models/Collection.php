@@ -41,7 +41,7 @@ class Collection extends Model
      *
      * @return void
      */
-    protected static function boot()
+    protected static function boot(): void
     {
         parent::boot();
 
@@ -110,5 +110,13 @@ class Collection extends Model
     public function activityLogs(): MorphMany
     {
         return $this->morphMany(ActivityLog::class, 'subject');
+    }
+
+    /**
+     * @return HasMany
+     */
+    public function follows(): HasMany
+    {
+        return $this->hasMany(CollectionFollow::class);
     }
 }
