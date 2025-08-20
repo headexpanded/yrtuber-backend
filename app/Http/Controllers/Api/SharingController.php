@@ -58,7 +58,7 @@ class SharingController extends Controller
     /**
      * Share a video
      */
-    public function shareVideo(\Illuminate\Http\Request $request, Video $video): JsonResponse
+    public function shareVideo(Request $request, Video $video): JsonResponse
     {
         $user = Auth::user();
         if (!$user) {
