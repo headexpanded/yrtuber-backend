@@ -13,7 +13,6 @@ use JetBrains\PhpStorm\ArrayShape;
 use Laravel\Sanctum\HasApiTokens;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\MorphMany;
-use App\Models\Collection;
 
 class User extends Authenticatable implements MustVerifyEmail
 {
