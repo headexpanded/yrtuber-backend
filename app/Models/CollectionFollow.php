@@ -8,7 +8,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class CollectionFollow extends Model
 {
-    use HasFactory;
+    use HasFactory; // seems to be an IDE problem, not a code issue
 
     protected $fillable = [
         'follower_id',
