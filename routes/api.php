@@ -104,6 +104,12 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/follows/following', [FollowController::class, 'following']);
     Route::get('/follows/followers', [FollowController::class, 'followers']);
     Route::get('/follows/check', [FollowController::class, 'check']);
+
+    // Collection follow management routes
+    Route::post('/follows/collections', [FollowController::class, 'followCollection']);
+    Route::delete('/follows/collections', [FollowController::class, 'unfollowCollection']);
+    Route::get('/follows/collections', [FollowController::class, 'followedCollections']);
+    Route::get('/follows/collections/check', [FollowController::class, 'checkCollectionFollow']);
 });
 
 // Public follow routes
