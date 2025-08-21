@@ -58,6 +58,7 @@ Route::middleware('auth:sanctum')->group(function () {
 
 // Public collection routes
 Route::get('/collections/{collection}', [CollectionController::class, 'show']);
+Route::get('/collections/{collection}/videos', [CollectionController::class, 'videos']);
 Route::get('/users/{user}/collections', [CollectionController::class, 'userCollections']);
 
 // Video management routes (authenticated)

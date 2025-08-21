@@ -7,6 +7,7 @@ use App\Http\Requests\StoreCollectionRequest;
 use App\Http\Requests\UpdateCollectionRequest;
 use App\Http\Resources\CollectionCollection;
 use App\Http\Resources\CollectionResource;
+use App\Http\Resources\VideoResource;
 use App\Models\Collection;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -174,5 +175,25 @@ class CollectionController extends Controller
             ->paginate($request->per_page ?? 15);
 
         return new CollectionCollection($collections);
+    }
+
+    /**
+     * Display videos for a specific collection.
+     */
+    public function videos(Request $request, Collection $collection): JsonResponse
+    {
+        // Check if user can view the collection
+        if (!$collection->is_public && $collection->user_id !== $request->user()?->id) {
+            return response()->json(['message' => 'Unauthorized'], 403);
+        }
+
+        $videos = $collection->videos()
+            ->orderBy('collection_video.position', 'asc')
+            ->orderBy('videos.created_at', 'asc')
+            ->get();
+
+        return response()->json([
+            'data' => VideoResource::collection($videos),
+        ]);
     }
 }
