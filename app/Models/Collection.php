@@ -22,6 +22,7 @@ class Collection extends Model
         'cover_image',
         'layout',
         'is_public',
+        'is_published',
         'is_featured',
         'view_count',
         'like_count',
@@ -30,6 +31,7 @@ class Collection extends Model
 
     protected $casts = [
         'is_public' => 'boolean',
+        'is_published' => 'boolean',
         'is_featured' => 'boolean',
         'view_count' => 'integer',
         'like_count' => 'integer',
@@ -48,6 +50,13 @@ class Collection extends Model
         static::creating(function ($collection) {
             if (empty($collection->slug)) {
                 $collection->slug = Str::slug($collection->title);
+            }
+        });
+
+        static::saving(function ($collection) {
+            // Auto-set is_published to false if collection has no videos
+            if ($collection->videos()->count() === 0) {
+                $collection->is_published = false;
             }
         });
     }

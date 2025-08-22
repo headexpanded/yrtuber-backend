@@ -52,6 +52,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/collections', [CollectionController::class, 'index']);
     Route::post('/collections', [CollectionController::class, 'store']);
     Route::put('/collections/{collection}', [CollectionController::class, 'update']);
+    Route::patch('/collections/{collection}/publish', [CollectionController::class, 'publish']);
     Route::delete('/collections/{collection}', [CollectionController::class, 'destroy']);
     Route::get('/my-collections', [CollectionController::class, 'myCollections']);
 });

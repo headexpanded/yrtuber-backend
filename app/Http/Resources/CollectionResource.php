@@ -23,6 +23,7 @@ class CollectionResource extends JsonResource
             'cover_image' => $this->cover_image,
             'layout' => $this->layout,
             'is_public' => $this->is_public,
+            'is_published' => $this->is_published,
             'is_featured' => $this->is_featured,
             'view_count' => $this->view_count,
             'like_count' => $this->like_count,

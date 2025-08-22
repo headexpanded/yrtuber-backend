@@ -29,6 +29,7 @@ class StoreCollectionRequest extends FormRequest
         'cover_image' => "string",
         'layout' => "array",
         'is_public' => "string",
+        'is_published' => "string",
         'is_featured' => "string",
         'tags' => "string",
         'tags.*' => "string"
@@ -41,6 +42,7 @@ class StoreCollectionRequest extends FormRequest
             'cover_image' => 'nullable|string|max:255',
             'layout' => ['required', Rule::in(['grid', 'list', 'carousel', 'magazine'])],
             'is_public' => 'boolean',
+            'is_published' => 'boolean',
             'is_featured' => 'boolean',
             'tags' => 'nullable|array',
             'tags.*' => 'integer|exists:tags,id',

@@ -29,6 +29,7 @@ class UpdateCollectionRequest extends FormRequest
         'cover_image' => "string",
         'layout' => "array",
         'is_public' => "string",
+        'is_published' => "string",
         'is_featured' => "string",
         'tags' => "string",
         'tags.*' => "string"
@@ -49,6 +50,7 @@ class UpdateCollectionRequest extends FormRequest
             'cover_image' => 'sometimes|nullable|string|max:255',
             'layout' => ['sometimes', 'required', Rule::in(['grid', 'list', 'carousel', 'magazine'])],
             'is_public' => 'sometimes|boolean',
+            'is_published' => 'sometimes|boolean',
             'is_featured' => 'sometimes|boolean',
             'tags' => 'sometimes|nullable|array',
             'tags.*' => 'integer|exists:tags,id',

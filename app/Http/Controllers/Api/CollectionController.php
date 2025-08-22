@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\PublishCollectionRequest;
 use App\Http\Requests\StoreCollectionRequest;
 use App\Http\Requests\UpdateCollectionRequest;
 use App\Http\Resources\CollectionCollection;
@@ -194,6 +195,40 @@ class CollectionController extends Controller
 
         return response()->json([
             'data' => VideoResource::collection($videos),
+        ]);
+    }
+
+    /**
+     * Publish or unpublish a collection.
+     */
+    public function publish(PublishCollectionRequest $request, Collection $collection): JsonResponse
+    {
+        // Check if user owns the collection
+        if ($collection->user_id !== $request->user()->id) {
+            return response()->json(['message' => 'Unauthorized'], 403);
+        }
+
+        $data = $request->validated();
+        $isPublished = $data['is_published'];
+
+        // Check if collection has videos before allowing publish
+        if ($isPublished && $collection->videos()->count() === 0) {
+            return response()->json([
+                'message' => 'Cannot publish collection without videos',
+                'errors' => [
+                    'is_published' => ['A collection must have at least one video to be published.']
+                ]
+            ], 422);
+        }
+
+        $collection->update(['is_published' => $isPublished]);
+        $collection->load(['user.profile', 'tags']);
+
+        $action = $isPublished ? 'published' : 'unpublished';
+
+        return response()->json([
+            'message' => "Collection {$action} successfully",
+            'collection' => new CollectionResource($collection),
         ]);
     }
 }
