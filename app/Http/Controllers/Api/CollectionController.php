@@ -183,7 +183,7 @@ class CollectionController extends Controller
     public function videos(Request $request, Collection $collection): JsonResponse
     {
         // Check if user can view the collection
-        if (!$collection->is_public && $collection->user_id !== $request->user()?->id) {
+        if (!$collection->is_public) {
             return response()->json(['message' => 'Unauthorized'], 403);
         }
 

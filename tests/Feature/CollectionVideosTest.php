@@ -57,7 +57,7 @@ class CollectionVideosTest extends TestCase
         $this->assertCount(3, $response->json('data'));
     }
 
-    public function test_private_collection_videos_cannot_be_retrieved_by_unauthorized_user(): void
+    public function test_private_collection_videos_cannot_be_retrieved(): void
     {
         $user = User::factory()->create();
         $collection = Collection::factory()->create([
@@ -74,7 +74,7 @@ class CollectionVideosTest extends TestCase
             ->assertJson(['message' => 'Unauthorized']);
     }
 
-    public function test_private_collection_videos_can_be_retrieved_by_owner(): void
+    public function test_private_collection_videos_cannot_be_retrieved_even_by_owner(): void
     {
         $user = User::factory()->create();
         $collection = Collection::factory()->create([
@@ -88,8 +88,8 @@ class CollectionVideosTest extends TestCase
         $response = $this->actingAs($user)
             ->getJson("/api/collections/{$collection->id}/videos");
 
-        $response->assertStatus(200);
-        $this->assertCount(2, $response->json('data'));
+        $response->assertStatus(403)
+            ->assertJson(['message' => 'Unauthorized']);
     }
 
     public function test_collection_videos_are_ordered_by_position(): void
