@@ -20,6 +20,7 @@ return new class extends Migration
             $table->string('cover_image')->nullable();
             $table->enum('layout', ['grid', 'list', 'carousel', 'magazine'])->default('grid');
             $table->boolean('is_public')->default(true);
+            $table->boolean('is_published')->default(false);
             $table->boolean('is_featured')->default(false);
             $table->integer('view_count')->default(0);
             $table->integer('like_count')->default(0);
